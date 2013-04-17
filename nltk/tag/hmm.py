@@ -957,6 +957,8 @@ class HiddenMarkovModelTrainer(object):
                      for s in self._states))
 
         model.reset_cache()
+        model._logprobs = []
+        np.seterr(invalid='ignore')
 
         # iterate until convergence
         converged = False
@@ -1020,13 +1022,19 @@ class HiddenMarkovModelTrainer(object):
                 # believe him. FIXME
 
             # test for convergence
-            if iteration > 0 and abs(logprob - last_logprob) < epsilon:
+            if iteration > 0 and abs((logprob - last_logprob)/last_logprob) < epsilon:
                 converged = True
 
             print('iteration', iteration, 'logprob', logprob)
             iteration += 1
             last_logprob = logprob
+            model._logprobs.append(logprob)
 
+        # logprob = 0
+        # for sequence in unlabeled_sequences:
+        #     alpha = model._forward_probability(sequence)
+        #     logprob += logsumexp2(alpha[-1])
+        # model._logprobs.append(logprob)
         return model
 
     def train_supervised(self, labelled_sequences, **kwargs):
